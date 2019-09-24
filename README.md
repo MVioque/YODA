@@ -4,7 +4,7 @@ Neural Network based algortihm to identify new high-mass Pre-Main Sequence objec
 
 The pipeline of the algorithm can be structured as follows:
 
-1st - Selection of Known Sources for Training and Input Sample of unkwown sources to classify
+1st - Selection of known sources for training and Input Sample of unkwown sources to classify
 
 2nd - Selection of the characteristics
 
