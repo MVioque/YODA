@@ -10,7 +10,7 @@ The pipeline of the algorithm can be structured as follows:
 
 3rd - Principal Component Analysis (PCA) to the characteristics to obtain set of features
 
-4rd - Generation of Bootstraped samples
+4rd - Generation of Bootstrapped samples
 
 5th - Neural Network
 
