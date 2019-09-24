@@ -313,7 +313,7 @@ while ite <ite_num: #Start bootstrapping runs
 
     
     
-    #
+    #GENERALIZE: Application of the trained neural network to the Input Sample of unkown sources.
     x_sample = Input_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
 
     #Important to scale as done for the training set first or transform to PCA
@@ -341,16 +341,8 @@ while ite <ite_num: #Start bootstrapping runs
     Be_Chance = Final_classes[:,2]
     Other_Chance = Final_classes[:,0]
     Output_final_set = np.append(Input_set, Final_classes, axis=1)
-    np.savetxt("Output_Input_sample_v3_no_r_Ha{}.csv".format(ite), Output_final_set, delimiter=",")
-    #files.upload("Output_Input_sample_no_Var{}.csv".format(ite))
-    uploaded = drive2.CreateFile({'title': 'Output_Input_sample_v3_no_r_Ha{}.csv'.format(ite)})
-    uploaded.SetContentFile('Output_Input_sample_v3_no_r_Ha{}.csv'.format(ite))
-    uploaded.Upload()
-    #files.download("Output_Input_sample{}.csv".format(ite))  
-    
+    np.savetxt("Output_Input_sample_v3_no_r_Ha{}.csv".format(ite), Output_final_set, delimiter=",")   
     
     ite = ite+1
 
 print("--- %s minutes ---" % ((time.time() - start_time)/60))
-pdf.savefig()
-pdf.close()
