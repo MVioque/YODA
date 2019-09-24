@@ -1,6 +1,6 @@
 Young Objects Discovery Algorithm (YODA)
 
-Neural Network based algortihm to identify new high-mass PMS objects (Herbig Ae/Be) within Gaia, AllWISE, IPHAS and VPHAS+ (see Vioque et al. in prep). The algorithm can be adapted to other target sources and catalogues.
+Neural Network based algortihm to identify new high-mass Pre-Main Sequence objects (Herbig Ae/Be) within Gaia, AllWISE, IPHAS and VPHAS+ (see Vioque et al. in prep). The algorithm can be adapted to other target sources and catalogues.
 
 The pipeline of the algorithm can be structured as follows:
 
