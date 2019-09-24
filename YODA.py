@@ -45,7 +45,7 @@ start_time = time.time()
 #Load the whole set to consider with the characteristics to use including the category (label). 
 FINAL_COMPLETE = np.loadtxt(open("FCT_no_i_no_rep3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
 
-#We load the special sources with the characteristics to use including the category (label). 
+#We load the special sources with the characteristics to use including the category (label). Columns need to coincide with Input sample one.
 Special_sources = np.loadtxt(open("Special_sources_all_info3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
 
 PMS_number = 848 #PMS sources in Special sources (can be counted by hand)
