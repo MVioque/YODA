@@ -41,24 +41,24 @@ from keras.callbacks import Callback
 #Measure duration of algorithm and plots elapsed time at the end
 start_time = time.time()
 
+#Load Input sample.
+#Load the whole set to consider with the characteristics to use including the category (label). 
+FINAL_COMPLETE = np.loadtxt(open("/content/gdrive/My Drive/Colab Notebooks/FCT_no_i_no_rep3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
+
+#We load the special sources with the characteristics to use including the category (label). 
+Special_sources = np.loadtxt(open("/content/gdrive/My Drive/Colab Notebooks/Special_sources_all_info3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
+
+PMS_number = 848 #PMS sources in Special sources (can be counted by hand)
+COMPLETE_number = 4150983 #Number with no repetitions
+
 #Hyper-parameters to choose:
 ite_num = 30 #bootsrapped samples to consider
 NNeurons = 580 #Number of neurons per layer (layers of different neurons are possible, but need to be individually specified)
 rate = 0.5 #Dropout rate (by default, dropout is applyied to all layers)
-
-#Load Input sample.
-#We first load the whole set to consider in tha parameters that we are using including the class. 
-FINAL_COMPLETE = np.loadtxt(open("/content/gdrive/My Drive/Colab Notebooks/FCT_no_i_no_rep3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
-
-PMS_number = 848
-COMPLETE_number = 4150983 #Number with no repetitions
-#Proportion of sources to be used in the training set = to the proportion of PMS sources in Gaia.
-Prop = 1-(PMS_number/(0.0018*COMPLETE_number))
-
-#We load the special sources in tha parameters that we are using incuding the class.
-#Special_sources = np.loadtxt(open("Special_sources_all_info.csv"), delimiter=',', skiprows=1, usecols=(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
-Special_sources = np.loadtxt(open("/content/gdrive/My Drive/Colab Notebooks/Special_sources_all_info3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
-
+Prop = 1-(PMS_number/(0.0018*COMPLETE_number))  #Proportion of Input sample sources to be used in the training set (= to the proportion of PMS sources in Gaia)
+Test_s = 0.1 #Choose test set size
+Cross_s = 0.1 #Choose Cross-Validadtion set size
+Probability_s = 0.50 #Probability threshold from which to select PMS objects:
 fig, ax = plt.subplots()
 
 Precision_list50 = []
@@ -77,8 +77,7 @@ TN_list50Be = []
 
 ite = 0
 
-while ite <ite_num: 
-   
+while ite <ite_num: #Start bootstrapping runs
   
     print('Bootstraped iteration:', ite)
     #From the whole set, we seperate a random number of sources equal to the porportion of PMS sources.
@@ -89,28 +88,25 @@ while ite <ite_num:
 
     #Create input set by concatenation.
     Input_for_training = np.concatenate((Training_others,Special_sources_boot))
-    #Input_for_training = shuffle(Input_for_training)
 
     print('Input_for_training =', Input_for_training.shape[0], '   100%')
 
 
-    #Select random elements from the imput set. 80% training set, 20% test set.
-    Training_set, Test_set = train_test_split(Input_for_training, test_size=0.1)                              
+    #Select random elements from the imput set. 80% training set, 20% test set (and they get shuffled).
+    Training_set, Test_set = train_test_split(Input_for_training, test_size=Test_s)                              
     
+    #Load train and test set
     x_train = Training_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
     y_train = Training_set[:,16]
 
     x_test = Test_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
     y_test = Test_set[:,16]    
          
-    
+    #Create all combinations of colours, but do not combine wih the first three characteristics that are not passbands.
     New_array = np.c_[x_train[:,0]]
     New_array = np.c_[New_array, x_train[:,1]]
     New_array = np.c_[New_array, x_train[:,2]]
-    #New_array = np.c_[New_array, x_train[:,3]]
-    #New_array = np.c_[New_array, x_train[:,4]]
 
-    #Create all combinations of colours
     a = 0
     b= 0
     while a+3 < x_train.shape[1]:
@@ -144,7 +140,8 @@ while ite <ite_num:
     #plt.ylabel('Variance (%)', fontsize=15)
 
     Total_var = np.sum(variance)
-
+ 
+    # We will now examine how many dimensions do we want by only chooseing those that retain 99.99% of the variance.
     variance_list =[]
     for i in range(len(variance)):
         variance_list.append(variance[i])
@@ -152,31 +149,35 @@ while ite <ite_num:
             print(round((np.sum(variance_list)/np.sum(variance))*100,2),'of the variance is retained with',i+1,'components')
             break
 
-    # we will now examine how many dimensions do we want
     Components_chosen = i+1
-
+    
+    #Apply chosen PCA to number of dimensions
     pca = PCA(n_components=Components_chosen)
     pca.fit(New_array)
     New_array_reduced = pca.transform(New_array) 
     print('')
     print("Shape of original Training Set: ", New_array.shape)
     print("Shape of reduced Training Set: ",New_array_reduced.shape)
-
+    
+    #Number of layers, THIS IS NOT AN HYPER-PARAMETER, if less of more layers are needed they need to be added in Keras manually
     Layers = 2
-
+    
+    #Linearization of the categories
     one_hot_labels = keras.utils.to_categorical(y_train, num_classes=3)
+   
+    #As it is a very skewed problem, we will used batches of the size of the Training Set.
     batch_size_value = len(New_array_reduced)
 
-
+    #Compute class weights, not is is balanced but other class weights can be applied.
     Weights = class_weight.compute_class_weight('balanced',
                                                      np.unique(y_train),
                                                      y_train)
 
-
     class_weights = {0:Weights[0],
                     1: Weights[1],
                     2: Weights[2]}
-
+    
+    #Neural Network
     if Layers == 2:
             model = Sequential()
             model.add(Dense(units=int(NNeurons), activation='relu', input_dim=Components_chosen,kernel_regularizer=regularizers.l2(0.01)))
@@ -189,8 +190,10 @@ while ite <ite_num:
             model.compile(loss='categorical_crossentropy',
                            optimizer='adamax', #How to update de learning rate. categorical_crossentropy
                            metrics=['accuracy',km.categorical_precision(label=1), km.categorical_recall(label=1)])  
-            earlystopping = keras.callbacks.EarlyStopping(monitor='val_precision', min_delta=0, patience=50, verbose=1, mode='max', baseline=None)#, restore_best_weights=True)
-            history = model.fit(New_array_reduced, one_hot_labels, epochs=3000,validation_split=0.1, batch_size=batch_size_value, verbose=0,class_weight=class_weights, callbacks= [earlystopping])
+            earlystopping = keras.callbacks.EarlyStopping(monitor='val_precision', min_delta=0, patience=50, verbose=1, mode='max', baseline=None)#
+            history = model.fit(New_array_reduced, one_hot_labels, epochs=3000,validation_split=Cross_s, batch_size=batch_size_value, verbose=0,class_weight=class_weights, callbacks= [earlystopping])
+            
+            #Optionally, cost functions, accuracy, precision and recall of cross-validation set can be plotted.
             #plt.figure(2)
             #plt.plot(history.history['loss']), plt.plot(history.history['val_loss'])
             #plt.ylabel('Cost function', fontsize = 12)
@@ -218,8 +221,6 @@ while ite <ite_num:
     New_array_test = np.c_[x_test[:,0]]
     New_array_test = np.c_[New_array_test, x_test[:,1]]
     New_array_test = np.c_[New_array_test, x_test[:,2]]
-    #New_array_test = np.c_[New_array_test, x_test[:,3]]
-    #New_array_test = np.c_[New_array_test, x_test[:,4]]
 
     #Create all combinations of colours
     a = 0
@@ -245,10 +246,10 @@ while ite <ite_num:
     countFP = 0
     countTN = 0
 
-    #Get precision and recall and F1 score:
+    #Get precision and recall (other metrics, like e.g., F1 score can be added):
 
     #Value from which to select PMS objects:
-    Probability = 0.50
+    Probability = Probability_s
     print('Probability threshold =',Probability)
 
     for i in range(len(New_array_reduced_test)):
@@ -321,7 +322,6 @@ while ite <ite_num:
     print('TNBe=',TN_list50Be)
     
     
-    
     #Recall vs. Precision plot
     import matplotlib.backends.backend_pdf 
 
@@ -341,8 +341,6 @@ while ite <ite_num:
     Recall_list_Be = []
     Count_FP_Be = []
     Count_TP_Be = []
-
-    #F1score_list = np.array([]).reshape(0,2)
 
     for P in np.linspace(0, 1, 101): 
      countTP_PMS = 0
@@ -406,10 +404,6 @@ while ite <ite_num:
     plt.ylabel('Precision', fontsize = 15)
     plt.xlabel('Recall', fontsize = 15)
 
-    #handles, labels = ax.get_legend_handles_labels()
-    #ax.legend(handles, labels)
-    #plt.legend(fontsize=15, handlelength=1.5, markerfirst=False,loc=3)
-
     ax.tick_params(reset='True', axis='both', which='both', direction='out')
 
     majorLocator = MultipleLocator(0.1)
@@ -437,49 +431,40 @@ while ite <ite_num:
     print(Count_FP_Be)
     print(Count_TP_Be)
 
+#        
+    x_sample = Input_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
+
+    #Important to scale as done for the training set first or transform to PCA
+    New_array_sample = np.c_[x_sample[:,0]]
+    New_array_sample = np.c_[New_array_sample, x_sample[:,1]]
+    New_array_sample = np.c_[New_array_sample, x_sample[:,2]]
 
 
+    #Create all combinations of colours
+    a = 0
+    b= 0
+    while a+3 < x_sample.shape[1]:
+        b = 0
+        while b+4+a < x_sample.shape[1]:   
+            New_col = x_sample[:,a+3]-x_sample[:,b+4+a]
+            New_array_sample = np.c_[New_array_sample, New_col]
+            b = b+1
+        a = a+1
 
-    
-    
-    
-    
-    
-    
-#    #x_sample = Input_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
-#    x_sample = Input_set[:,[4,5,6,7,8,9,10,11,12,13,14,15]]
-#    #Important to scale as done for the training set first or transform to PCA
-#    New_array_sample = np.c_[x_sample[:,0]]
-#    New_array_sample = np.c_[New_array_sample, x_sample[:,1]]
-#    #New_array_sample = np.c_[New_array_sample, x_sample[:,2]]
-#    #New_array_sample = np.c_[New_array_sample, x_sample[:,3]]
-#    #New_array_sample = np.c_[New_array_sample, x_sample[:,4]]
-#
-#    #Create all combinations of colours
-#    a = 0
-#    b= 0
-#    while a+2 < x_sample.shape[1]:
-#        b = 0
-#        while b+3+a < x_sample.shape[1]:   
-#            New_col = x_sample[:,a+2]-x_sample[:,b+3+a]
-#            New_array_sample = np.c_[New_array_sample, New_col]
-#            b = b+1
-#        a = a+1
-#
-#    New_array_sample = scaler.transform(New_array_sample)
-#    New_array_reduced_sample = pca.transform(New_array_sample) 
-#
-#    Final_classes = model.predict(New_array_reduced_sample)
-#    PMS_Chance = Final_classes[:,1]
-#    Be_Chance = Final_classes[:,2]
-#    Other_Chance = Final_classes[:,0]
-#    Output_final_set = np.append(Input_set, Final_classes, axis=1)
-#    np.savetxt("Output_Input_sample_v3_no_r_Ha{}.csv".format(ite), Output_final_set, delimiter=",")
-#    #files.upload("Output_Input_sample_no_Var{}.csv".format(ite))
-#    uploaded = drive2.CreateFile({'title': 'Output_Input_sample_v3_no_r_Ha{}.csv'.format(ite)})
-#    uploaded.SetContentFile('Output_Input_sample_v3_no_r_Ha{}.csv'.format(ite))
-#    uploaded.Upload()
-#    #files.download("Output_Input_sample{}.csv".format(ite))  
+    New_array_sample = scaler.transform(New_array_sample)
+    New_array_reduced_sample = pca.transform(New_array_sample) 
+
+    Final_classes = model.predict(New_array_reduced_sample)
+    PMS_Chance = Final_classes[:,1]
+    Be_Chance = Final_classes[:,2]
+    Other_Chance = Final_classes[:,0]
+    Output_final_set = np.append(Input_set, Final_classes, axis=1)
+    np.savetxt("Output_Input_sample_v3_no_r_Ha{}.csv".format(ite), Output_final_set, delimiter=",")
+    #files.upload("Output_Input_sample_no_Var{}.csv".format(ite))
+    uploaded = drive2.CreateFile({'title': 'Output_Input_sample_v3_no_r_Ha{}.csv'.format(ite)})
+    uploaded.SetContentFile('Output_Input_sample_v3_no_r_Ha{}.csv'.format(ite))
+    uploaded.Upload()
+    #files.download("Output_Input_sample{}.csv".format(ite))  
     
     
     ite = ite+1
