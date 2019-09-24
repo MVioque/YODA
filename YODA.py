@@ -4,52 +4,29 @@ from keras.models import Sequential
 from keras.layers import Dense
 import keras
 from keras import regularizers
-import scipy.io as sio
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn import datasets
-import tensorflow as tf
-from keras.utils import plot_model
-import matplotlib.backends.backend_pdf 
-from keras import regularizers
-from astropy.io import fits
-from sklearn.model_selection import train_test_split, StratifiedKFold, KFold
 from sklearn import preprocessing
 import time
-import pandas as pd
-import matplotlib as mpl
-import matplotlib.cm as cm
 from sklearn.decomposition import PCA
-from sklearn.decomposition import FastICA
-from sklearn.decomposition import NMF
-from sklearn.manifold import TSNE
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
-from sklearn import preprocessing
 from sklearn.utils import resample
-import math
-from keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.utils import class_weight
-from sklearn.utils import shuffle
-from google.colab import files
-from google.colab import drive
 import keras_metrics as km
-import csv
-import os
-import tempfile
-from keras.callbacks import Callback
 
-#Measure duration of algorithm and plots elapsed time at the end
+#Measure duration of algorithm
 start_time = time.time()
 
 #Load Input sample.
 #Load the whole set to consider with the characteristics to use including the category (label). 
 FINAL_COMPLETE = np.loadtxt(open("FCT_no_i_no_rep3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
 
-#We load the special sources with the characteristics to use including the category (label). Columns need to coincide with Input sample one.
+#Load the special sources (known Pre-Main Sequence and Classical Be stars) with the characteristics to use including the category (label). Columns need to coincide with Input sample one.
 Special_sources = np.loadtxt(open("Special_sources_all_info3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
 
-PMS_number = 848 #PMS sources in Special sources (can be counted by hand)
-COMPLETE_number = 4150983 #Number with no repetitions
+#These numbers are used to calculate the approprate size of the Category 0 of other objects.
+PMS_number = 848 #PMS sources in Special sources 
+COMPLETE_number = 4150983 #Complete number of unknown sources
 
 #Hyper-parameters to choose:
 ite_num = 30 #bootsrapped samples to consider
@@ -59,8 +36,11 @@ Prop = 1-(PMS_number/(0.0018*COMPLETE_number))  #Proportion of Input sample sour
 Test_s = 0.1 #Choose test set size
 Cross_s = 0.1 #Choose Cross-Validadtion set size
 Probability_s = 0.50 #Probability threshold from which to select PMS objects:
+
+
 fig, ax = plt.subplots()
 
+#The lists below will be filled with the values for each bootstrapped run
 Precision_list50 = []
 Recall_list50 = []
 TP_list50 = []
@@ -80,29 +60,32 @@ ite = 0
 while ite <ite_num: #Start bootstrapping runs
   
     print('Bootstraped iteration:', ite)
-    #From the whole set, we seperate a random number of sources equal to the porportion of PMS sources.
+    
+    #From the whole set, we seperate a random number of sources equal to the porportion of PMS sources (or Prop value).
     Training_others, Input_set = train_test_split(FINAL_COMPLETE, test_size=Prop)
 
     #Bootstrap the special sources
     Special_sources_boot = resample(Special_sources, replace = True, n_samples=len(Special_sources), random_state=None)
 
-    #Create input set by concatenation.
+    #Create bootstraped input set by concatenation.
     Input_for_training = np.concatenate((Training_others,Special_sources_boot))
 
     print('Input_for_training =', Input_for_training.shape[0], '   100%')
 
 
-    #Select random elements from the imput set. 80% training set, 20% test set (and they get shuffled).
+    #Select random elements from the imput set. 100-Test_s% training set, Test_s% test set (and they get shuffled).
     Training_set, Test_set = train_test_split(Input_for_training, test_size=Test_s)                              
     
     #Load train and test set
     x_train = Training_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
-    y_train = Training_set[:,16]
+    y_train = Training_set[:,16] #This column is the label of the source, 0 for other, 1 for PMS and 2 for Classical Be
 
     x_test = Test_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
-    y_test = Test_set[:,16]    
-         
-    #Create all combinations of colours, but do not combine wih the first three characteristics that are not passbands.
+    y_test = Test_set[:,16] #This column is the label of the source, 0 for other, 1 for PMS and 2 for Classical Be
+    
+    #In our problem, we combined several columns to generate more characteristic. The lines below before PCA can be deleted if
+    #chosen characteristics are already ok.
+    #Create all combinations of colours, but do not combine with the first three characteristics that are not passbands.
     New_array = np.c_[x_train[:,0]]
     New_array = np.c_[New_array, x_train[:,1]]
     New_array = np.c_[New_array, x_train[:,2]]
@@ -120,6 +103,7 @@ while ite <ite_num: #Start bootstrapping runs
     scaler = preprocessing.StandardScaler().fit(New_array)
     New_array = scaler.transform(New_array)
 
+    
     # Run PCA on this dataset
     pca = PCA(n_components=New_array.shape[1])
     pca.fit(New_array)
@@ -127,7 +111,7 @@ while ite <ite_num: #Start bootstrapping runs
     # extract the variance of each of the components
     variance = pca.explained_variance_
 
-    # extract the components, not necessary to print them
+    # extract the components, it is not necessary to print them
     components = pca.components_
     #print("components: ", components)
 
@@ -141,7 +125,8 @@ while ite <ite_num: #Start bootstrapping runs
 
     Total_var = np.sum(variance)
  
-    # We will now examine how many dimensions do we want by only chooseing those that retain 99.99% of the variance.
+    # We will now examine how many dimensions we want by only choosing those principal componenets 
+    # that retain 99.99% of the variance.
     variance_list =[]
     for i in range(len(variance)):
         variance_list.append(variance[i])
@@ -159,7 +144,7 @@ while ite <ite_num: #Start bootstrapping runs
     print("Shape of original Training Set: ", New_array.shape)
     print("Shape of reduced Training Set: ",New_array_reduced.shape)
     
-    #Number of layers, THIS IS NOT AN HYPER-PARAMETER, if less of more layers are needed they need to be added in Keras manually
+    #Number of layers, THIS IS NOT AN HYPER-PARAMETER, if less of more layers are needed they need to be added into Keras network manually
     Layers = 2
     
     #Linearization of the categories
@@ -168,7 +153,7 @@ while ite <ite_num: #Start bootstrapping runs
     #As it is a very skewed problem, we will used batches of the size of the Training Set.
     batch_size_value = len(New_array_reduced)
 
-    #Compute class weights, not is is balanced but other class weights can be applied.
+    #Compute class weights, now is is balanced but other class weights can be applied.
     Weights = class_weight.compute_class_weight('balanced',
                                                      np.unique(y_train),
                                                      y_train)
@@ -177,7 +162,7 @@ while ite <ite_num: #Start bootstrapping runs
                     1: Weights[1],
                     2: Weights[2]}
     
-    #Neural Network
+    #Neural Network, hyper-paeameters of the network can be edited below (e.g., optimizer, regularization, activation function ...)
     if Layers == 2:
             model = Sequential()
             model.add(Dense(units=int(NNeurons), activation='relu', input_dim=Components_chosen,kernel_regularizer=regularizers.l2(0.01)))
@@ -193,7 +178,9 @@ while ite <ite_num: #Start bootstrapping runs
             earlystopping = keras.callbacks.EarlyStopping(monitor='val_precision', min_delta=0, patience=50, verbose=1, mode='max', baseline=None)#
             history = model.fit(New_array_reduced, one_hot_labels, epochs=3000,validation_split=Cross_s, batch_size=batch_size_value, verbose=0,class_weight=class_weights, callbacks= [earlystopping])
             
-            #Optionally, cost functions, accuracy, precision and recall of cross-validation set can be plotted.
+            #Early sttoping when precision on Cross-Validation set of category 1 of PMS sources gets to a maximum
+            
+            #Optionally, cost functions, accuracy, precision and recall of cross-validation set can be plotted during training to chek evolution.
             #plt.figure(2)
             #plt.plot(history.history['loss']), plt.plot(history.history['val_loss'])
             #plt.ylabel('Cost function', fontsize = 12)
@@ -217,7 +204,10 @@ while ite <ite_num: #Start bootstrapping runs
     print()
     print('RESULTS ON TEST SET')
     #CHOOSEN MODEL ON TEST SET
-    #Important to scale as done for the training set first or transform to PCA
+    #Evaluate the trained network on teste set for both category 1 of PMS and category 2 of Classical Be
+    #NOTE THAT THE ALGORITHM IS BEING OPTIMIZED FOR CATEGORY 1 of PMS
+    
+    #Important to scale as done for the training set first and transform to PCA
     New_array_test = np.c_[x_test[:,0]]
     New_array_test = np.c_[New_array_test, x_test[:,1]]
     New_array_test = np.c_[New_array_test, x_test[:,2]]
@@ -299,12 +289,12 @@ while ite <ite_num: #Start bootstrapping runs
        if Be_Chance[i]<Probability and y_test[i]!=2:
             countTN  = countTN + 1 
 
-    print('Number of PMS objects in test set =', countTP+countFN)     
+    print('Number of Classical Be objects in test set =', countTP+countFN)     
 
-    #Precision: Of all objects for which we have predicted a PMS nature, what fraction is actually a PMS?
+    #Precision: Of all objects for which we have predicted a Be nature, what fraction is actually a Be?
     PrecisionBe = countTP/(countTP+countFP)
 
-    #Recall: Of all obejcts that are actually of PMS nature, what fraction have we detected as PMS?
+    #Recall: Of all obejcts that are actually of Be nature, what fraction have we detected as Be?
     RecallBe = countTP/(countTP+countFN)
       
     Precision_list50Be.append(PrecisionBe)
@@ -320,118 +310,10 @@ while ite <ite_num: #Start bootstrapping runs
     print('FNBe=',FN_list50Be)
     print('FPBe=',FP_list50Be)
     print('TNBe=',TN_list50Be)
+
     
     
-    #Recall vs. Precision plot
-    import matplotlib.backends.backend_pdf 
-
-    pdf = matplotlib.backends.backend_pdf.PdfPages("Precision_vs_recall.pdf")
-
-    countTP_PMS = 0
-    countFN_PMS = 0
-    countFP_PMS = 0
-    countTN_PMS = 0
-    Precision_list_PMS = []
-    Recall_list_PMS = []
-    countTP_Be = 0
-    countFN_Be = 0
-    countFP_Be = 0
-    countTN_Be = 0
-    Precision_list_Be = []
-    Recall_list_Be = []
-    Count_FP_Be = []
-    Count_TP_Be = []
-
-    for P in np.linspace(0, 1, 101): 
-     countTP_PMS = 0
-     countFN_PMS = 0
-     countFP_PMS = 0
-     countTN_PMS = 0
-     countTP_Be = 0
-     countFN_Be = 0
-     countFP_Be = 0
-     countTN_Be = 0 
-     for i in range(len(x_test)):
-       if PMS_Chance[i]>=P and y_test[i]==1:
-            countTP_PMS  = countTP_PMS + 1
-       if PMS_Chance[i]<P and y_test[i]==1:
-            countFN_PMS  = countFN_PMS + 1
-       if PMS_Chance[i]>=P and y_test[i]!=1:
-            countFP_PMS  = countFP_PMS + 1
-       if PMS_Chance[i]<P and y_test[i]!=1:
-            countTN_PMS  = countTN_PMS + 1
-       if Be_Chance[i]>=P and y_test[i]==2:
-            countTP_Be  = countTP_Be + 1
-       if Be_Chance[i]<P and y_test[i]==2:
-            countFN_Be  = countFN_Be + 1
-       if Be_Chance[i]>=P and y_test[i]!=2:
-            countFP_Be  = countFP_Be + 1
-       if Be_Chance[i]<P and y_test[i]!=2:
-            countTN_Be  = countTN_Be + 1 
-     Count_FP_Be.append(countFP_Be)
-     Count_TP_Be.append(countTP_Be) 
-     if countTP_PMS+countFP_PMS == 0 or countTP_PMS+countFN_PMS ==0 or countTP_PMS==0:
-       Precision_list_PMS.append(None)
-       Recall_list_PMS.append(None)
-     else:    
-       Precision_list_PMS.append(countTP_PMS/(countTP_PMS+countFP_PMS))
-       Recall_list_PMS.append(countTP_PMS/(countTP_PMS+countFN_PMS)) 
-     if countTP_Be+countFP_Be == 0 or countTP_Be+countFN_Be ==0 or countTP_Be==0:   
-          Precision_list_Be.append(None)
-          Recall_list_Be.append(None)
-     else:    
-       Precision_list_Be.append(countTP_Be/(countTP_Be+countFP_Be))
-       Recall_list_Be.append(countTP_Be/(countTP_Be+countFN_Be)) 
-     if P==0.25:
-      Precision25 = countTP_PMS/(countTP_PMS+countFP_PMS)
-      Recall25 = countTP_PMS/(countTP_PMS+countFN_PMS)
-      PrecisionBe25 = countTP_Be/(countTP_Be+countFP_Be)
-      RecallBe25 = countTP_Be/(countTP_Be+countFN_Be)
-     if P==0.75:
-      Precision75 = countTP_PMS/(countTP_PMS+countFP_PMS)
-      Recall75 = countTP_PMS/(countTP_PMS+countFN_PMS)
-      PrecisionBe75 = countTP_Be/(countTP_Be+countFP_Be)
-      RecallBe75 = countTP_Be/(countTP_Be+countFN_Be)
-      
-    plt.plot(Recall, Precision,'or',ms=7,markeredgecolor='black',markeredgewidth=1.5, zorder=1)
-    plt.plot(Recall25, Precision25,'vr',ms=7,markeredgecolor='black',markeredgewidth=1.5, zorder=1)
-    plt.plot(Recall75, Precision75,'^r',ms=7, markeredgecolor='black',markeredgewidth=1.5,zorder=1)    
-    plt.plot(Recall_list_PMS, Precision_list_PMS, zorder=-1,color='blue')
-    plt.plot(RecallBe, PrecisionBe,'og',ms=7,markeredgecolor='black',markeredgewidth=1.5, zorder=1)
-    plt.plot(RecallBe25, PrecisionBe25,'vg',ms=7,markeredgecolor='black',markeredgewidth=1.5, zorder=1)
-    plt.plot(RecallBe75, PrecisionBe75,'^g',ms=7,markeredgecolor='black',markeredgewidth=1.5, zorder=1)    
-    plt.plot(Recall_list_Be, Precision_list_Be, zorder=-1,color='gray')      
-    plt.ylabel('Precision', fontsize = 15)
-    plt.xlabel('Recall', fontsize = 15)
-
-    ax.tick_params(reset='True', axis='both', which='both', direction='out')
-
-    majorLocator = MultipleLocator(0.1)
-    majorFormatter = FormatStrFormatter('%1.1f')
-    minorLocator = MultipleLocator(0.05)
-
-    majorLocator1 = MultipleLocator(0.1)
-    majorFormatter1 = FormatStrFormatter('%1.1f')
-    minorLocator1 = MultipleLocator(0.05)
-
-    ax.xaxis.set_major_locator(majorLocator1)
-    ax.xaxis.set_major_formatter(majorFormatter1)
-    ax.xaxis.set_minor_locator(minorLocator1)
-
-    ax.yaxis.set_major_locator(majorLocator)
-    ax.yaxis.set_major_formatter(majorFormatter)
-    ax.yaxis.set_minor_locator(minorLocator)
-
-
-    print('Number of PMS objects in test set =', countTP_PMS+countFN_PMS)     
-    print('Number of Be objects in test set =', countTP_Be+countFN_Be)     
-    print(countTP_PMS)
-    print(countFP_PMS)
-    print(countTP_Be)
-    print(Count_FP_Be)
-    print(Count_TP_Be)
-
-#        
+    #
     x_sample = Input_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
 
     #Important to scale as done for the training set first or transform to PCA
