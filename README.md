@@ -6,7 +6,7 @@ In short, the algorithm is envisaged to assess the problem of disentangling two 
 
 The pipeline of the algorithm can be structured as follows:
 
-1st - Selection of known sources for training and selection of Input Sample of unknown sources to classify (from the latter a small random fraction will be withdrawn to form a third category of "other" sources for the Training)
+1st - Selection of known sources for training and selection of Input Sample of unknown sources to classify (from the latter a small random fraction will be withdrawn to form a third category of "other" sources, category 0, for the training)
 
 2nd - Selection of the characteristics
 
@@ -16,10 +16,10 @@ The pipeline of the algorithm can be structured as follows:
 
 5th - Weighting of the skewed classes
 
-6th - Neural Network classification. Training stops when Cross-Validation precision gets to a maximum.
+6th - Neural Network classification. Training stops when Cross-Validation precision gets to a maximum
 
 7th - Evaluation on Test Set
 
-8th - Classification and generation of output catalogues
+8th - Classification of Input Sample sources with trained network
 
-The output of YODA is a file per bootstrapped iteration with the classification, i.e., the Input Sample with three more columns, each one with the probability of the object of belonging to each one of the input categories: Herbig Ae/Be, Classical Be or something else. In order to average the bootstrapped sets and get a final catalogue, the Bootgather.py code can be used.
+The output of YODA is a file per bootstrapped iteration with the resulting neural network classification, i.e., the Input Sample with three more columns, each one with the probability of the object of belonging to each one of the input categories: other, Herbig Ae/Be or Classical Be. In order to average the bootstrapped sets and get a final catalogue, the Bootgather.py code can be used.
