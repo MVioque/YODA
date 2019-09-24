@@ -340,7 +340,7 @@ while ite <ite_num: #Start bootstrapping runs
     Be_Chance = Final_classes[:,2]
     Other_Chance = Final_classes[:,0]
     Output_final_set = np.append(Input_set, Final_classes, axis=1)
-    np.savetxt("Output_Input_sample_v3_no_r_Ha{}.csv".format(ite), Output_final_set, delimiter=",")   
+    np.savetxt("Output_Input_sample.csv".format(ite), Output_final_set, delimiter=",")   
     
     ite = ite+1
 
