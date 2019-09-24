@@ -1,8 +1,8 @@
 Young Objects Discovery Algorithm (YODA)
 
-Neural Network based algortihm to identify new high-mass Pre-Main Sequence objects (Herbig Ae/Be stars) within Gaia, AllWISE, IPHAS and VPHAS+ (Input Sample, see Vioque et al. in prep). The algorithm can be adapted to other target sources and catalogues.
+Neural Network based algortihm to identify new high-mass Pre-Main Sequence objects (Herbig Ae/Be stars) within Gaia, AllWISE, IPHAS and VPHAS+ (Input Sample, see Vioque et al. in prep). The algorithm can be adapted to other target sources and catalogues. Most of the hyper-parameters and input lists can be edited at the very beginning of the code.
 
-In short, the algorithm is envisaged to tackle the problem of disentangling two very skewed classes (Herbig Ae/Be and Classical Be stars) with respect to the whole Input Sample. The issues of having very a small training set at aiming at categorizing very skewed classes was addresed by means of bootstrapping and weighting the classes in a balanced fashion. This can be edited in order to aim for different problems.
+In short, the algorithm is envisaged to assess the problem of disentangling two very similar classes (Herbig Ae/Be and Classical Be stars). This is a very skewed problem as the number of these sources is negligible with respect to the size of the Input Sample. In addition, we know very few of them for the training. The issues of having very a small training set and aiming at categorizing very skewed classes are addresed by means of bootstrapping and weighting the classes in a balanced fashion. This can be edited in order to aim to other classification problems.
 
 The pipeline of the algorithm can be structured as follows:
 
@@ -22,4 +22,4 @@ The pipeline of the algorithm can be structured as follows:
 
 8th - Classification and generation of output catalogues
 
-The output of YODA will be a probability assignment to each ot the sources in the Input Sample for each of the bootstrapped sets. In order to average the bootstrapped sets and get a final catalogue the Bootsum.py code can be used.
+The output of YODA is a file per bootstrapped iteration with the classifications for the probability. In order to average the bootstrapped sets and get a final catalogue the Bootgather.py code can be used.
