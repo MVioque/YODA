@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 from sklearn import preprocessing
 import time
 from sklearn.decomposition import PCA
-from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from sklearn.utils import resample
 from sklearn.utils import class_weight
 import keras_metrics as km
