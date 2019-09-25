@@ -36,9 +36,6 @@ Test_s = 0.1 #Choose test set size
 Cross_s = 0.1 #Choose Cross-Validadtion set size
 Probability_s = 0.50 #Probability threshold from which to select PMS objects:
 
-
-fig, ax = plt.subplots()
-
 #The lists below will be filled with the values for each bootstrapped run
 Precision_list50 = []
 Recall_list50 = []
