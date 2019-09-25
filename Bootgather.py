@@ -7,9 +7,14 @@ import pandas as pd
 
 start_time = time.time()
 
+#This code is designed to average the results of thirty bootstrapped iterations and calculate their standard error of the mean.
+#If less iterations are used some sections can be commented out or edited.
 
+#Output file columns: source_id, ra, dec, prob_other, prob_pms, prob_be, prob_other_mean_error, prob_pms_mean_error, prob_be_mean_error
+#Output file name: Output_Input_sample_mean_average.csv
 
-with open('Output_Input_sample_v3_good.csv', 'w') as out1, open('Output_Input_sample_v30.csv', 'r') as inp0, open('Output_Input_sample_v31.csv', 'r') as inp1, open('Output_Input_sample_v32.csv', 'r') as inp2, open('Output_Input_sample_v33.csv', 'r') as inp3, open('Output_Input_sample_v34.csv', 'r') as inp4, open('Output_Input_sample_v35.csv', 'r') as inp5, open('Output_Input_sample_v36.csv', 'r') as inp6, open('Output_Input_sample_v37.csv', 'r') as inp7, open('Output_Input_sample_v38.csv', 'r') as inp8, open('Output_Input_sample_v39.csv', 'r') as inp9:
+#Add up first 10 bootstrapped iterations (10/30)
+with open('Output_Input_sample_good.csv', 'w') as out1, open('Output_Input_sample_v0.csv', 'r') as inp0, open('Output_Input_sample_v1.csv', 'r') as inp1, open('Output_Input_sample_v2.csv', 'r') as inp2, open('Output_Input_sample_v3.csv', 'r') as inp3, open('Output_Input_sample_v4.csv', 'r') as inp4, open('Output_Input_sample_v5.csv', 'r') as inp5, open('Output_Input_sample_v6.csv', 'r') as inp6, open('Output_Input_sample_v7.csv', 'r') as inp7, open('Output_Input_sample_v8.csv', 'r') as inp8, open('Output_Input_sample_v9.csv', 'r') as inp9:
     csvreader0 = csv.reader(inp0)
     csvreader1 = csv.reader(inp1)
     csvreader2 = csv.reader(inp2)
@@ -55,8 +60,8 @@ with open('Output_Input_sample_v3_good.csv', 'w') as out1, open('Output_Input_sa
     print('9')
     
 
-
-with open('Output_Input_sample_v3_good2.csv', 'w') as out1, open('Output_Input_sample_v3_good.csv', 'r') as inp0, open('Output_Input_sample_v310.csv', 'r') as inp10, open('Output_Input_sample_v311.csv', 'r') as inp11, open('Output_Input_sample_v312.csv', 'r') as inp12, open('Output_Input_sample_v313.csv', 'r') as inp13, open('Output_Input_sample_v314.csv', 'r') as inp14, open('Output_Input_sample_v315.csv', 'r') as inp15, open('Output_Input_sample_v316.csv', 'r') as inp16, open('Output_Input_sample_v317.csv', 'r') as inp17, open('Output_Input_sample_v318.csv', 'r') as inp18, open('Output_Input_sample_v319.csv', 'r') as inp19:
+#Add up second 10 bootstrapped iterations (20/30)
+with open('Output_Input_sample_good2.csv', 'w') as out1, open('Output_Input_sample_good.csv', 'r') as inp0, open('Output_Input_sample_v10.csv', 'r') as inp10, open('Output_Input_sample_v11.csv', 'r') as inp11, open('Output_Input_sample_v12.csv', 'r') as inp12, open('Output_Input_sample_v13.csv', 'r') as inp13, open('Output_Input_sample_v14.csv', 'r') as inp14, open('Output_Input_sample_v15.csv', 'r') as inp15, open('Output_Input_sample_v16.csv', 'r') as inp16, open('Output_Input_sample_v17.csv', 'r') as inp17, open('Output_Input_sample_v18.csv', 'r') as inp18, open('Output_Input_sample_v19.csv', 'r') as inp19:
     csvreader0 = csv.reader(inp0)
     csvreader10 = csv.reader(inp10)
     csvreader11 = csv.reader(inp11)
@@ -105,8 +110,8 @@ with open('Output_Input_sample_v3_good2.csv', 'w') as out1, open('Output_Input_s
            writer1.writerow([row[0],row[1],row[2],row[18],row[19],row[20]])
     print('19')
 
-
-with open('Output_Input_sample_v3_good3.csv', 'w') as out1, open('Output_Input_sample_v3_good2.csv', 'r') as inp0, open('Output_Input_sample_v320.csv', 'r') as inp20, open('Output_Input_sample_v321.csv', 'r') as inp21, open('Output_Input_sample_v322.csv', 'r') as inp22, open('Output_Input_sample_v323.csv', 'r') as inp23, open('Output_Input_sample_v324.csv', 'r') as inp24, open('Output_Input_sample_v325.csv', 'r') as inp25, open('Output_Input_sample_v326.csv', 'r') as inp26, open('Output_Input_sample_v327.csv', 'r') as inp27, open('Output_Input_sample_v328.csv', 'r') as inp28, open('Output_Input_sample_v329.csv', 'r') as inp29:
+#Add up last 10 bootstrapped iterations (30/30)
+with open('Output_Input_sample_good3.csv', 'w') as out1, open('Output_Input_sample_good2.csv', 'r') as inp0, open('Output_Input_sample_v20.csv', 'r') as inp20, open('Output_Input_sample_v21.csv', 'r') as inp21, open('Output_Input_sample_v22.csv', 'r') as inp22, open('Output_Input_sample_v23.csv', 'r') as inp23, open('Output_Input_sample_v24.csv', 'r') as inp24, open('Output_Input_sample_v25.csv', 'r') as inp25, open('Output_Input_sample_v26.csv', 'r') as inp26, open('Output_Input_sample_v27.csv', 'r') as inp27, open('Output_Input_sample_v28.csv', 'r') as inp28, open('Output_Input_sample_v29.csv', 'r') as inp29:
     csvreader0 = csv.reader(inp0)
     csvreader20 = csv.reader(inp20)
     csvreader21 = csv.reader(inp21)
@@ -156,11 +161,12 @@ with open('Output_Input_sample_v3_good3.csv', 'w') as out1, open('Output_Input_s
     print('29')    
 
 
-df = pd.read_csv('Output_Input_sample_v3_good3.csv', sep=',')
-df.sort_values(by=['ra','dec']).to_csv('Output_Input_sample_v3_good_sorted.csv')
+#Sort by coordinates so repeated sources between bootstrapped iterations are consecutive
+df = pd.read_csv('Output_Input_sample_good3.csv', sep=',')
+df.sort_values(by=['ra','dec']).to_csv('Output_Input_sample_good_sorted.csv')
 
-    
-with open('Output_Input_sample_v3_good_sorted2.csv', 'w') as out1, open('Output_Input_sample_v3_good_sorted.csv', 'r') as inp0:
+#Calculates mean of probabilities of same sources and derives the standard error of the mean.
+with open('Output_Input_sample_mean_average.csv', 'w') as out1, open('Output_Input_sample_good_sorted.csv', 'r') as inp0:
     csvreader0 = csv.reader(inp0)
     fields = next(csvreader0)
     writer1 = csv.writer(out1)
@@ -231,5 +237,6 @@ with open('Output_Input_sample_v3_good_sorted2.csv', 'w') as out1, open('Output_
     prob_be_mean_error.append(np.std(prob_be[:])/math.sqrt(len(prob_be[:])))               
     for a in range(len(ra_mean)):             
         writer1.writerow([source_id_mean[a],ra_mean[a],dec_mean[a],prob_other_mean[a],prob_pms_mean[a],prob_be_mean[a],prob_other_mean_error[a],prob_pms_mean_error[a],prob_be_mean_error[a]])
-           
+
+        
 print("--- %s minutes ---" % ((time.time() - start_time)/60))
