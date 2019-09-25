@@ -18,10 +18,10 @@ start_time = time.time()
 
 #Load Input sample.
 #Load the whole set to consider with the characteristics to use including the category (label). 
-FINAL_COMPLETE = np.loadtxt(open("FCT_no_i_no_rep3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
+Input_sample = np.loadtxt(open("Input_sample.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
 
 #Load the special sources (known Pre-Main Sequence and Classical Be stars) with the characteristics to use including the category (label). Columns need to coincide with Input sample one.
-Special_sources = np.loadtxt(open("Special_sources_all_info3.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
+Special_sources = np.loadtxt(open("Special_sources.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
 
 #These numbers are used to calculate the approprate size of the Category 0 of other objects.
 PMS_number = 848 #PMS sources in Special sources 
@@ -58,7 +58,7 @@ while ite <ite_num: #Start bootstrapping runs
     print('Bootstraped iteration:', ite)
     
     #From the whole set, we seperate a random number of sources equal to the porportion of PMS sources (or Prop value).
-    Training_others, Input_set = train_test_split(FINAL_COMPLETE, test_size=Prop)
+    Training_others, Input_set = train_test_split(Input_sample, test_size=Prop)
 
     #Bootstrap the special sources
     Special_sources_boot = resample(Special_sources, replace = True, n_samples=len(Special_sources), random_state=None)
