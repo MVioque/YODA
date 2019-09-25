@@ -16,27 +16,28 @@ import keras_metrics as km
 #Measure duration of algorithm
 start_time = time.time()
 
-#Load Input sample.
-#Load the whole set to consider with the characteristics to use including the category (label). 
+#Load Input sample
+#Load the whole set to consider with the characteristics to use as columns, including the corresponding category (label) of 0 (other-unknown)
 Input_sample = np.loadtxt(open("Input_sample.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
 
-#Load the special sources (known Pre-Main Sequence and Classical Be stars) with the characteristics to use including the category (label). Columns need to coincide with Input sample one.
+#Load the special sources (known Pre-Main Sequence and Classical Be stars) with the characteristics to use including the category (label, 1 or 2). Columns need to coincide with the Input sample ones
 Special_sources = np.loadtxt(open("Special_sources.csv"), delimiter=',', skiprows=1, usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17))
 
-#These numbers are used to calculate the approprate size of the Category 0 of other objects.
-PMS_number = 848 #PMS sources in Special sources 
+#These numbers are used to calculate the appropriate size of the category 0 of other objects
+PMS_number = 848 #PMS sources in special sources 
 COMPLETE_number = 4150983 #Complete number of unknown sources
 
 #Hyper-parameters to choose:
-ite_num = 30 #bootsrapped samples to consider
+ite_num = 30 #Number of bootsrapped samples
 NNeurons = 580 #Number of neurons per layer (layers of different neurons are possible, but need to be individually specified)
 rate = 0.5 #Dropout rate (by default, dropout is applyied to all layers)
-Prop = 1-(PMS_number/(0.0018*COMPLETE_number))  #Proportion of Input sample sources to be used in the training set (= to the proportion of PMS sources in Gaia)
+regu = 0.01 #Amount of L2 regularization
+Prop = 1-(PMS_number/(0.0018*COMPLETE_number))  #Proportion of Input sample sources to be used in the training set (e.g., = to the proportion of PMS sources in Gaia)
 Test_s = 0.1 #Choose test set size
 Cross_s = 0.1 #Choose Cross-Validadtion set size
-Probability_s = 0.50 #Probability threshold from which to select PMS objects:
+Probability_s = 0.50 #Probability threshold from which to select PMS objects and Classical Be stars for Test Set metrics
 
-#The lists below will be filled with the values for each bootstrapped run
+#The lists below will be filled with the values of the metrics after evaluation on Test Set for each bootstrapped run
 Precision_list50 = []
 Recall_list50 = []
 TP_list50 = []
@@ -57,7 +58,8 @@ while ite <ite_num: #Start bootstrapping runs
   
     print('Bootstraped iteration:', ite)
     
-    #From the whole set, we seperate a random number of sources equal to the porportion of PMS sources (or Prop value).
+    #From the whole set, we separate a random number of sources according to the chosen proportion (Prop).
+    #These random sources form the category 0 of "other" objects
     Training_others, Input_set = train_test_split(Input_sample, test_size=Prop)
 
     #Bootstrap the special sources
@@ -69,19 +71,20 @@ while ite <ite_num: #Start bootstrapping runs
     print('Input_for_training =', Input_for_training.shape[0], '   100%')
 
 
-    #Select random elements from the imput set. 100-Test_s% training set, Test_s% test set (and they get shuffled).
+    #Random split into Trainint Set and Test Set. 100-Test_s% training set, Test_s% test set (and they get shuffled).
     Training_set, Test_set = train_test_split(Input_for_training, test_size=Test_s)                              
     
     #Load train and test set
-    x_train = Training_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
+    x_train = Training_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]] #Columns of initial characteristics
     y_train = Training_set[:,16] #This column is the label of the source, 0 for other, 1 for PMS and 2 for Classical Be
 
-    x_test = Test_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
+    x_test = Test_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]] #Columns of initial characteristics
     y_test = Test_set[:,16] #This column is the label of the source, 0 for other, 1 for PMS and 2 for Classical Be
     
-    #In our problem, we combined several columns to generate more characteristic. The lines below before PCA can be deleted if
+    #In our problem, we combined several columns to generate more characteristic. The lines below (before PCA) can be deleted if
     #chosen characteristics are already ok.
-    #Create all combinations of colours, but do not combine with the first three characteristics that are not passbands.
+    
+    #Create all combinations of colours, but do not use with the first three characteristics as they are not passbands.
     New_array = np.c_[x_train[:,0]]
     New_array = np.c_[New_array, x_train[:,1]]
     New_array = np.c_[New_array, x_train[:,2]]
@@ -96,6 +99,7 @@ while ite <ite_num: #Start bootstrapping runs
             b = b+1
         a = a+1
 
+    #Scale the characteristics (same mean and standard deviation)    
     scaler = preprocessing.StandardScaler().fit(New_array)
     New_array = scaler.transform(New_array)
 
@@ -122,7 +126,7 @@ while ite <ite_num: #Start bootstrapping runs
     Total_var = np.sum(variance)
  
     # We will now examine how many dimensions we want by only choosing those principal componenets 
-    # that retain 99.99% of the variance.
+    # that retain 99.99% of the variance
     variance_list =[]
     for i in range(len(variance)):
         variance_list.append(variance[i])
@@ -132,7 +136,7 @@ while ite <ite_num: #Start bootstrapping runs
 
     Components_chosen = i+1
     
-    #Apply chosen PCA to number of dimensions
+    #Apply PCA to number of chosen dimensions
     pca = PCA(n_components=Components_chosen)
     pca.fit(New_array)
     New_array_reduced = pca.transform(New_array) 
@@ -146,10 +150,10 @@ while ite <ite_num: #Start bootstrapping runs
     #Linearization of the categories
     one_hot_labels = keras.utils.to_categorical(y_train, num_classes=3)
    
-    #As it is a very skewed problem, we will used batches of the size of the Training Set.
+    #As it is a very skewed problem, we will used batches of the size of the Training Set
     batch_size_value = len(New_array_reduced)
 
-    #Compute class weights, now is is balanced but other class weights can be applied.
+    #Compute class weights, default is balanced but other class weights can be applied
     Weights = class_weight.compute_class_weight('balanced',
                                                      np.unique(y_train),
                                                      y_train)
@@ -161,13 +165,13 @@ while ite <ite_num: #Start bootstrapping runs
     #Neural Network, hyper-paeameters of the network can be edited below (e.g., optimizer, regularization, activation function ...)
     if Layers == 2:
             model = Sequential()
-            model.add(Dense(units=int(NNeurons), activation='relu', input_dim=Components_chosen,kernel_regularizer=regularizers.l2(0.01)))
+            model.add(Dense(units=int(NNeurons), activation='relu', input_dim=Components_chosen,kernel_regularizer=regularizers.l2(regu)))
             model.add(keras.layers.Dropout(rate, noise_shape=None, seed=None))
             model.add(keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True, beta_initializer='zeros', gamma_initializer='ones', moving_mean_initializer='zeros', moving_variance_initializer='ones', beta_regularizer=None, gamma_regularizer=None, beta_constraint=None, gamma_constraint=None))
-            model.add(Dense(units=int(NNeurons), activation='relu', input_dim=int(NNeurons),kernel_regularizer=regularizers.l2(0.01)))
+            model.add(Dense(units=int(NNeurons), activation='relu', input_dim=int(NNeurons),kernel_regularizer=regularizers.l2(regu)))
             model.add(keras.layers.Dropout(rate, noise_shape=None, seed=None))
             model.add(keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True, beta_initializer='zeros', gamma_initializer='ones', moving_mean_initializer='zeros', moving_variance_initializer='ones', beta_regularizer=None, gamma_regularizer=None, beta_constraint=None, gamma_constraint=None))     
-            model.add(Dense(units=3, activation='softmax',kernel_regularizer=regularizers.l2(0.01)))
+            model.add(Dense(units=3, activation='softmax',kernel_regularizer=regularizers.l2(regu)))
             model.compile(loss='categorical_crossentropy',
                            optimizer='adamax', #How to update de learning rate. categorical_crossentropy
                            metrics=['accuracy',km.categorical_precision(label=1), km.categorical_recall(label=1)])  
@@ -176,7 +180,8 @@ while ite <ite_num: #Start bootstrapping runs
             
             #Early sttoping when precision on Cross-Validation set of category 1 of PMS sources gets to a maximum
             
-            #Optionally, cost functions, accuracy, precision and recall of cross-validation set can be plotted during training to chek evolution.
+            #Optionally, cost functions, accuracy, precision and recall of cross-validation set can be plotted during training to chek evolution
+            
             #plt.figure(2)
             #plt.plot(history.history['loss']), plt.plot(history.history['val_loss'])
             #plt.ylabel('Cost function', fontsize = 12)
@@ -200,10 +205,10 @@ while ite <ite_num: #Start bootstrapping runs
     print()
     print('RESULTS ON TEST SET')
     #CHOOSEN MODEL ON TEST SET
-    #Evaluate the trained network on teste set for both category 1 of PMS and category 2 of Classical Be
+    #Evaluate the trained network on test set for both category 1 of PMS and category 2 of Classical Be stars
     #NOTE THAT THE ALGORITHM IS BEING OPTIMIZED FOR CATEGORY 1 of PMS
     
-    #Important to scale as done for the training set first and transform to PCA
+    #Important to first scale as done for the training set and transform by PCA
     New_array_test = np.c_[x_test[:,0]]
     New_array_test = np.c_[New_array_test, x_test[:,1]]
     New_array_test = np.c_[New_array_test, x_test[:,2]]
@@ -221,7 +226,8 @@ while ite <ite_num: #Start bootstrapping runs
 
     New_array_test = scaler.transform(New_array_test)
     New_array_reduced_test = pca.transform(New_array_test) 
-
+    
+    #Apply trained Neural Network to Test Set
     test_classes = model.predict(New_array_reduced_test)
     PMS_Chance = test_classes[:,1]
     Be_Chance = test_classes[:,2]
@@ -234,7 +240,7 @@ while ite <ite_num: #Start bootstrapping runs
 
     #Get precision and recall (other metrics, like e.g., F1 score can be added):
 
-    #Value from which to select PMS objects:
+    #Value from which to select PMS objects and Classical Be stars:
     Probability = Probability_s
     print('Probability threshold =',Probability)
 
@@ -312,7 +318,7 @@ while ite <ite_num: #Start bootstrapping runs
     #GENERALIZE: Application of the trained neural network to the Input Sample of unkown sources.
     x_sample = Input_set[:,[3,4,5,6,7,8,9,10,11,12,13,14,15]]
 
-    #Important to scale as done for the training set first or transform to PCA
+    #Important to first scale as done for the training set and transform by PCA
     New_array_sample = np.c_[x_sample[:,0]]
     New_array_sample = np.c_[New_array_sample, x_sample[:,1]]
     New_array_sample = np.c_[New_array_sample, x_sample[:,2]]
@@ -332,6 +338,7 @@ while ite <ite_num: #Start bootstrapping runs
     New_array_sample = scaler.transform(New_array_sample)
     New_array_reduced_sample = pca.transform(New_array_sample) 
 
+    #Apply trained Neural Network
     Final_classes = model.predict(New_array_reduced_sample)
     PMS_Chance = Final_classes[:,1]
     Be_Chance = Final_classes[:,2]
