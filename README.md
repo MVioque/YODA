@@ -22,4 +22,4 @@ The pipeline of the algorithm can be structured as follows:
 
 8th - Classification of Input Sample sources with the trained network
 
-The output of YODA is a file per bootstrapped iteration with the resulting neural network classification, i.e., the Input Sample with three more columns, each one with the probability of the object of belonging to each one of the input categories: other, Herbig Ae/Be or Classical Be. In addition, YODA outputs precision and recall metrics for category 1 and 2 resulting from evaluation on Test Set. In order to average the probabilities of the bootstrapped sets and get a final catalogue, the Bootgather.py code can be used.
+The output of YODA is a file per bootstrapped iteration with the resulting neural network classification, i.e., the Input Sample with three more columns, each one with the probability of the object of belonging to each one of the input categories: other, Herbig Ae/Be or Classical Be. In addition, YODA outputs the precision and recall metrics from evaluation on Test Set for category 1 and 2. In order to average the probabilities of the bootstrapped sets and get a final catalogue the Bootgather.py code can be used.
