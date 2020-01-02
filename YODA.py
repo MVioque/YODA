@@ -34,7 +34,7 @@ rate = 0.5 #Dropout rate (by default, dropout is applyied to all layers)
 regu = 0.01 #Amount of L2 regularization
 Prop = 1-(PMS_number/(0.0018*COMPLETE_number))  #Proportion of Input sample sources to be used in the training set (e.g., = to the proportion of PMS sources in Gaia)
 Test_s = 0.1 #Choose test set size
-Cross_s = 0.1 #Choose Cross-Validadtion set size
+Cross_s = 0.1 #Choose Cross-Validation set size
 Probability_s = 0.50 #Probability threshold from which to select PMS objects and Classical Be stars for Test Set metrics
 
 #The lists below will be filled with the values of the metrics after evaluation on Test Set for each bootstrapped run
