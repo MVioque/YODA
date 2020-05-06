@@ -16,7 +16,7 @@ The pipeline of the algorithm is structured as follows:
 
 5th - Weighting of the skewed classes
 
-6th - Artificial Neural Network classification. Training stops when the precision of¬¬¬¬ category 1 on cross-validation set gets to a maximum.
+6th - Artificial Neural Network classification. Training stops when the precision of the category 1 on cross-validation set gets to a maximum.
 
 7th - Evaluation on test set
 
