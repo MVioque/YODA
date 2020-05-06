@@ -1,8 +1,8 @@
 Young Objects Discovery Algorithm (YODA)
 
-Neural Network-based algorithm to identify new high-mass Pre-Main Sequence (PMS) objects (Herbig Ae/Be stars) within Gaia, AllWISE, IPHAS and VPHAS+ (Sample of Study, see Vioque et al. in prep). The algorithm can be adapted to other target sources and catalogues. Most of the hyper-parameters and input lists can be edited at the very beginning of the code.
+Artificial Neural Network-based algorithm to identify new high-mass Pre-Main Sequence (PMS) objects (Herbig Ae/Be stars) within Gaia, AllWISE, IPHAS and VPHAS+ (Sample of Study, see Vioque et al. 2020). The algorithm can be adapted to other target sources and catalogues. Most of the hyper-parameters and input sets can be edited at the very beginning of the code.
 
-In short, the algorithm is envisaged to assess the problem of disentangling two very similar classes (PMS/Herbig Ae/Be, category 1, and Classical Be stars, category 2). This is a very skewed problem as the number of these sources is negligible with respect to the size of the Sample of Study. In addition, very few of them are known for the training. The issues of having a very small training set and aiming at categorizing very skewed classes are addressed by means of bootstrapping and weighting the classes in a balanced fashion. This can be edited in order to aim for other classification problems.
+In short, the algorithm is envisaged to assess the problem of disentangling two very similar classes (PMS/Herbig Ae/Be, category 1, and classical Be stars, category 2). This is a very skewed problem as the number of sources of these classes is negligible with respect to the size of the Sample of Study. In addition, very few of them are known for the training. The issues of having a very small training set and aiming at categorizing very skewed classes are addressed by means of bootstrapping and weighting the classes in a balanced fashion. This can be edited in order to aim for other classification problems.
 
 The pipeline of the algorithm can be structured as follows:
 
@@ -22,4 +22,4 @@ The pipeline of the algorithm can be structured as follows:
 
 8th - Classification of Input Set sources with the trained network
 
-The output of YODA is a file per bootstrapped iteration with the resulting neural network classification, i.e., the Input Set with three more columns, each one with the probability of the object of belonging to each one of the input categories: other, PMS or Classical Be. In addition, YODA outputs the precision and recall metrics from evaluation on test set for category 1 and 2. In order to average the probabilities of the bootstrapped sets and get a final catalogue the Bootgather.py code can be used.
+The output of YODA is a file per bootstrapped iteration with the resulting neural network classification, i.e., the Input Set with three more columns, each one with the probability of the object of belonging to each one of the input categories: other, PMS or classical Be. In addition, YODA outputs the precision and recall metrics from evaluation on test set for category 1 and 2. In order to average the probabilities of the bootstrapped sets and get a final catalogue the Bootgather.py code can be used.
