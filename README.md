@@ -12,7 +12,7 @@ The pipeline of the algorithm is structured as follows:
 
 3rd - Generation of bootstrapped samples
 
-4th - Principal component analysis (PCA) is applied to the characteristics to obtain a set of features (keep 99.99% of variance).
+4th - Principal component analysis (PCA) is applied to the characteristics to obtain a set of features (keeps 99.99% of variance).
 
 5th - Weighting of the skewed classes
 
